@@ -1,19 +1,58 @@
+import json
+
 import tornado.ioloop
 import tornado.web
+
+from database import engine, Product, init_models
+
+
+class Application(tornado.web.Application):
+    def __init__(self, db):
+        self.db = db
+        handlers = [
+            (r"/", MainHandler),
+            (r"/product", ProductHandler)
+        ]
+
+        super(Application, self).__init__(handlers=handlers)
 
 
 class MainHandler(tornado.web.RequestHandler):
     def get(self):
-        self.write("Hello, world")
+        db_engine = self.application.db
+        connection = db_engine.connect()
+        result = connection.execute('select * from products')
+        titles = ""
+        for row in result:
+            titles += row['title']
+        self.write("Hello, " + titles)
 
 
-def make_app():
-    return tornado.web.Application([
-        (r"/", MainHandler),
-    ])
+class ProductHandler(tornado.web.RequestHandler):
+    def prepare(self):
+        if self.request.headers.get("Content-Type", "").startswith("application/json"):
+            self.json_args = json.loads(self.request.body)
+        else:
+            self.json_args = None
+
+    def post(self):
+        self.set_header("Content-Type", "application/json")
+        to_add = self.json_args["title"]
+        new_product = Product(title=to_add)
+        new_product.add()
+        self.write('{"message":" Added: ' + to_add + '"}')
+
+
+def make_app(db):
+    app = Application(db)
+    return app
 
 
 def run():
-    app = make_app()
+    # Initialize sql-alchemy model DB schema
+    init_models()
+
+    # Make the tornado application
+    app = make_app(engine)
     app.listen(8888)
     tornado.ioloop.IOLoop.current().start()
