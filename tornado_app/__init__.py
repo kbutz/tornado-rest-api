@@ -1,7 +1,9 @@
 import json
+import logging
 
 import tornado.ioloop
 import tornado.web
+from tornado.options import define
 
 from database import engine, Product, init_models
 
@@ -49,6 +51,14 @@ def make_app(db):
 
 
 def run():
+    # Set log levels for tornado loggers
+    access_log = logging.getLogger("tornado.access")
+    access_log.setLevel(logging.INFO)
+    app_log = logging.getLogger("tornado.application")
+    app_log.setLevel(logging.INFO)
+    gen_log = logging.getLogger("tornado.general")
+    gen_log.setLevel(logging.INFO)
+
     # Initialize sql-alchemy model DB schema
     init_models()
 

@@ -2,7 +2,8 @@ from sqlalchemy import create_engine, Column, String, Integer, Numeric, Boolean
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-engine = create_engine('mysql+pymysql://root:password@192.168.1.6:3306/tornado')
+# NOTE: echo logs sql statements and should be disabled in production
+engine = create_engine('mysql+pymysql://root:password@192.168.1.6:3306/tornado', echo=True)
 
 Session = sessionmaker(bind=engine)
 
